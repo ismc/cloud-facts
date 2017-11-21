@@ -1,0 +1,15 @@
+---
+- name: Build the interface dict
+  set_fact:
+    interface_item:
+      name: "{{ cloud_instance_item.interfaces[interface_facts_item.0].name | default(omit) }}"
+      private_ip_address: "{{ interface_facts_item.1.private_ip_address }}"
+      private_ip_prefix: "{{ cloud_instance_item.interfaces[interface_facts_item.0].private_ip_prefix | default(omit) }}"
+      private_ip_cidr: "{{ cloud_instance_item.interfaces[interface_facts_item.0].private_ip_cidr | default(omit) }}"
+      public_dns_name: "{{ interface_facts_item.1.association.public_dns_name if interface_facts_item.1.association is defined else omit }}"
+      public_ip_address: "{{ interface_facts_item.1.association.public_ip if interface_facts_item.1.association is defined else omit }}"
+  register: interface_facts
+
+- name: Add the interface to the interfaces dict
+  set_fact:
+    instance_interfaces: "{{ instance_interfaces | default([]) + [ interface_item ] }}"

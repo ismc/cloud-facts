@@ -1,29 +1,16 @@
 ---
-# - debug: var=instance_facts_item
-
-- name: Get the instance facts {{ cloud_vpc_data.project }}
-  ec2_instance_facts:
-    region: "{{ cloud_vpc_data.region }}"
-    filters:
-      vpc-id: "{{ vpc_id }}"
-      "tag:Name": "{{ cloud_instance_item.name }}"
-      "tag:Environment": "{{ cloud_vpc_data.project }}"
-  register: instance_facts
-
-- name: Deference the inteface facts
+- name: Deference the instance facts
   set_fact:
-    instance_facts_item: "{{ instance_facts.instances[0] }}"
-
-- debug: var=instance_facts_item
+    instance_facts_item: "{{ instance_facts_dict[cloud_instance_item.name] }}"
 
 - name: Create interfaces list
   set_fact:
     instance_interfaces: []
 
 - include_tasks: "aws-interface.yml"
-  with_indexed_items: "{{ instance_facts_item.network_interfaces | default([]) }}"
+  with_indexed_items: "{{ cloud_instance_item.interfaces | default([]) }}"
   loop_control:
-    loop_var: interface_facts_item
+    loop_var: cloud_interface_item
 
 - name: Set the IP address for the instance
   set_fact:
@@ -39,16 +26,3 @@
     interfaces: "{{ instance_interfaces }}"
     cloud_template_item: "{{ cloud_instance_item }}"
     cloud_vpc_data: "{{ cloud_vpc_data }}"
-
-
-# - name: Build the instance dict
-#   set_fact:
-#     instance_item:
-#       ip_address: "{{ instance_ip_address }}"
-#       private_ip_address: "{{ instance_facts_item.private_ip_address }}"
-#       interfaces: "{{ instance_interfaces }}"
-#
-# - name: Add the instance to the interface_facts dict
-#   set_fact:
-#     cloud_instance_facts: "{{ cloud_instance_facts | combine({instance_facts_item.tags.Name: instance_item}) }}"
-#   when: instance_facts_item.tags.Name is defined
